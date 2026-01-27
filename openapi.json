@@ -1,0 +1,252 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "JSON to XLS Converter API",
+    "description": "REST API сервис для конвертации JSON данных в Excel файлы (XLSX) и обратно с поддержкой форматирования ячеек",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8080",
+      "description": "Local development server"
+    }
+  ],
+  "paths": {
+    "/json2xls": {
+      "post": {
+        "summary": "Конвертирует JSON в Excel файл",
+        "description": "Принимает JSON данные и возвращает Excel файл (.xlsx) с поддержкой форматирования ячеек",
+        "operationId": "json2xls",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/Request"
+              },
+              "example": {
+                "sheets": [
+                  {
+                    "title": "Sheet1",
+                    "rows": [
+                      [
+                        {
+                          "value": 1,
+                          "format": {
+                            "bold": true,
+                            "bg_color": "#FFFF00"
+                          }
+                        },
+                        {
+                          "value": "Product A",
+                          "format": {
+                            "font_name": "Arial",
+                            "font_size": 12,
+                            "bold": true
+                          }
+                        },
+                        {
+                          "value": "Product B",
+                          "format": {
+                            "bg_color": "#F0F0F0"
+                          }
+                        }
+                      ]
+                    ]
+                  }
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Успешная конвертация",
+            "content": {
+              "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Неверный формат JSON",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string"
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Метод не разрешен"
+          },
+          "500": {
+            "description": "Ошибка при конвертации"
+          }
+        }
+      }
+    },
+    "/xls2json": {
+      "post": {
+        "summary": "Конвертирует Excel файл в JSON",
+        "description": "Принимает Excel файл (.xlsx или .xls) и возвращает JSON в том же формате, что используется для /json2xls",
+        "operationId": "xls2json",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "file": {
+                    "type": "string",
+                    "format": "binary",
+                    "description": "Excel файл (.xlsx или .xls)"
+                  }
+                },
+                "required": ["file"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Успешная конвертация",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Request"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Ошибка в запросе (отсутствует файл, неподдерживаемый формат и т.д.)"
+          },
+          "405": {
+            "description": "Метод не разрешен"
+          },
+          "500": {
+            "description": "Ошибка при конвертации"
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "summary": "Проверка работоспособности сервиса",
+        "description": "Возвращает статус сервиса",
+        "operationId": "health",
+        "responses": {
+          "200": {
+            "description": "Сервис работает",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "status": {
+                      "type": "string",
+                      "example": "ok"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Request": {
+        "type": "object",
+        "required": ["sheets"],
+        "properties": {
+          "sheets": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Sheet"
+            }
+          }
+        }
+      },
+      "Sheet": {
+        "type": "object",
+        "required": ["rows"],
+        "properties": {
+          "title": {
+            "type": "string",
+            "description": "Название листа (опционально)"
+          },
+          "rows": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/Row"
+            }
+          }
+        }
+      },
+      "Row": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/Cell"
+        }
+      },
+      "Cell": {
+        "type": "object",
+        "properties": {
+          "value": {
+            "description": "Значение ячейки (может быть число, строка, булево значение). Если не указано, но есть format, создается пустая ячейка с примененным форматированием",
+            "oneOf": [
+              { "type": "number" },
+              { "type": "string" },
+              { "type": "boolean" }
+            ]
+          },
+          "format": {
+            "$ref": "#/components/schemas/Format"
+          }
+        }
+      },
+      "Format": {
+        "type": "object",
+        "properties": {
+          "bold": {
+            "type": "boolean",
+            "description": "Жирный шрифт"
+          },
+          "italic": {
+            "type": "boolean",
+            "description": "Курсив"
+          },
+          "bg_color": {
+            "type": "string",
+            "description": "Цвет фона в формате hex (#RRGGBB)",
+            "example": "#FFFF00"
+          },
+          "text_color": {
+            "type": "string",
+            "description": "Цвет текста (hex формат или название цвета)",
+            "example": "#FF0000"
+          },
+          "font_name": {
+            "type": "string",
+            "description": "Название шрифта",
+            "example": "Arial"
+          },
+          "font_size": {
+            "type": "number",
+            "description": "Размер шрифта",
+            "example": 12
+          }
+        }
+      }
+    }
+  }
+}
