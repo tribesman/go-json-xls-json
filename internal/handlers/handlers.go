@@ -9,9 +9,11 @@ import (
 	"io"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
 
 	"json2xls/internal/converter"
+	"json2xls/internal/metrics"
 	"json2xls/internal/models"
 
 	"github.com/xuri/excelize/v2"
@@ -58,6 +60,8 @@ func HandleJson2Xls(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	snap := metrics.Start()
+
 	var req models.Request
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, fmt.Sprintf("Invalid JSON: %v", err), http.StatusBadRequest)
@@ -71,9 +75,19 @@ func HandleJson2Xls(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Метрики считаем до начала записи тела (заголовки должны быть выставлены заранее).
+	res := snap.Finish()
+
 	// Устанавливаем заголовки для скачивания файла (до записи в ResponseWriter)
 	w.Header().Set("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
 	w.Header().Set("Content-Disposition", "attachment; filename=output.xlsx")
+	w.Header().Set("X-Elapsed-Ms", strconv.FormatInt(res.Elapsed.Milliseconds(), 10))
+	w.Header().Set("X-Heap-Alloc-Delta-Bytes", strconv.FormatUint(res.AllocDeltaBytes, 10))
+	w.Header().Set("X-Heap-TotalAlloc-Delta-Bytes", strconv.FormatUint(res.TotalAllocDelta, 10))
+	w.Header().Set("X-Mem-Sys-Bytes", strconv.FormatUint(res.SysBytes, 10))
+	if res.RSSKB >= 0 {
+		w.Header().Set("X-RSS-KB", strconv.FormatInt(res.RSSKB, 10))
+	}
 
 	// Записываем файл напрямую в ResponseWriter
 	if err := f.Write(w); err != nil {
@@ -88,6 +102,8 @@ func HandleXls2Json(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
+
+	snap := metrics.Start()
 
 	// Парсим multipart form (максимальный размер файла 10MB)
 	err := r.ParseMultipartForm(10 << 20)
@@ -134,8 +150,18 @@ func HandleXls2Json(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Метрики выставляем до записи JSON в тело.
+	res := snap.Finish()
+
 	// Устанавливаем заголовки для JSON ответа
 	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set("X-Elapsed-Ms", strconv.FormatInt(res.Elapsed.Milliseconds(), 10))
+	w.Header().Set("X-Heap-Alloc-Delta-Bytes", strconv.FormatUint(res.AllocDeltaBytes, 10))
+	w.Header().Set("X-Heap-TotalAlloc-Delta-Bytes", strconv.FormatUint(res.TotalAllocDelta, 10))
+	w.Header().Set("X-Mem-Sys-Bytes", strconv.FormatUint(res.SysBytes, 10))
+	if res.RSSKB >= 0 {
+		w.Header().Set("X-RSS-KB", strconv.FormatInt(res.RSSKB, 10))
+	}
 	w.WriteHeader(http.StatusOK)
 
 	// Кодируем и отправляем JSON

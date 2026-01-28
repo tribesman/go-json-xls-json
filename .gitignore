@@ -33,3 +33,6 @@ go.work.sum
 # .vscode/
 
 json2xls
+
+# Local perf/load tests (large binaries)
+tests/
