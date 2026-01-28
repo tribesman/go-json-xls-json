@@ -15,6 +15,45 @@ REST API сервис на Go для конвертации JSON данных в
 - Go 1.21 или выше
 - Доступ в интернет для загрузки зависимостей
 
+## Быстрый запуск через Docker (без клонирования репозитория)
+
+### Вариант A (рекомендуется): скачать `docker-compose.yml` и запустить
+
+1. Скачайте `docker-compose.yml` из репозитория:
+
+```bash
+curl -fsSL -o docker-compose.yml https://raw.githubusercontent.com/tribesman/go-json-xls-json/main/docker-compose.yml
+```
+
+2. (Опционально) Настройте переменные окружения перед запуском:
+
+- **PORT**: порт, на котором сервис слушает внутри контейнера (по умолчанию `8080`)
+- **SERVICE_PORT**: порт, на который пробрасываем наружу (по умолчанию `8080`)
+- **BASIC_AUTH_USER / BASIC_AUTH_PASS**: если оба заданы — включается Basic Auth для `/json2xls`, `/xls2json`, `/openapi.json`
+
+Пример:
+
+```bash
+export PORT=8080
+export SERVICE_PORT=9090
+export BASIC_AUTH_USER=admin
+export BASIC_AUTH_PASS=secret
+```
+
+3. Запустите:
+
+```bash
+docker compose up -d
+```
+
+Образ будет скачан из GHCR: `ghcr.io/tribesman/go-json-xls-json:latest`
+
+### Вариант B: одной командой (без сохранения файла)
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/tribesman/go-json-xls-json/main/docker-compose.yml | docker compose -f - up -d
+```
+
 ## Сборка проекта
 
 ### Настройка окружения
