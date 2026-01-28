@@ -1,0 +1,16 @@
+services:
+  json2xls:
+    # Готовый образ, который публикуется GitHub Actions в GHCR
+    image: ghcr.io/tribesman/go-json-xls-json:latest
+    container_name: go-json-xls-json
+    environment:
+      # PORT задаёт порт, на котором слушает сервис ВНУТРИ контейнера.
+      # SERVICE_PORT задаёт порт, на который пробрасываем наружу (host -> container).
+      # По умолчанию оба = 8080.
+      PORT: "${PORT:-8080}"
+      # Basic Auth включится автоматически, если заданы оба значения:
+      BASIC_AUTH_USER: "${BASIC_AUTH_USER:-}"
+      BASIC_AUTH_PASS: "${BASIC_AUTH_PASS:-}"
+    ports:
+      - "${SERVICE_PORT:-8080}:${PORT:-8080}"
+    restart: unless-stopped
