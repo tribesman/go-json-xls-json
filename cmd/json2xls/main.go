@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"net/http"
+	"os"
 
 	"json2xls/internal/handlers"
 )
@@ -14,16 +15,19 @@ func main() {
 	http.HandleFunc("/openapi.json", handlers.HandleOpenAPI)
 	http.HandleFunc("/health", handlers.HandleHealth)
 
-	port := ":8080"
-	log.Printf("Server starting on port %s", port)
+	port := os.Getenv("PORT")
+	if port == "" {
+		port = "8080"
+	}
+	addr := ":" + port
+	log.Printf("Server starting on port %s", addr)
 	log.Printf("POST /json2xls - Convert JSON to XLS")
 	log.Printf("POST /xls2json - Convert XLS/XLSX to JSON")
 	log.Printf("GET /doc - API Documentation (Redoc)")
 	log.Printf("GET /openapi.json - OpenAPI specification")
 	log.Printf("GET /health - Health check")
 
-	if err := http.ListenAndServe(port, nil); err != nil {
+	if err := http.ListenAndServe(addr, nil); err != nil {
 		log.Fatal(err)
 	}
 }
-
