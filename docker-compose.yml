@@ -1,5 +1,3 @@
-version: "3.9"
-
 services:
   json2xls:
     # Готовый образ, который публикуется GitHub Actions в GHCR

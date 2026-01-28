@@ -44,7 +44,9 @@ jobs:
         with:
           context: .
           file: ./Dockerfile
-          platforms: linux/amd64
+          # Собираем multi-arch образ для amd64 и arm64,
+          # чтобы он корректно работал и на x86-серверах, и на ARM (например, Apple Silicon).
+          platforms: linux/amd64,linux/arm64
           push: ${{ github.event_name == 'push' }}
           tags: |
             ghcr.io/${{ github.repository_owner }}/go-json-xls-json:latest

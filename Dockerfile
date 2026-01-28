@@ -10,6 +10,10 @@ WORKDIR /app
 # Enable Go modules explicitly (useful in CI)
 ENV GO111MODULE=on
 
+# Build args from buildx (target OS/ARCH)
+ARG TARGETOS
+ARG TARGETARCH
+
 # Cache deps first
 COPY go.mod go.sum ./
 RUN go mod download
@@ -17,8 +21,8 @@ RUN go mod download
 # Copy the rest of the source
 COPY . .
 
-# Build statically linked binary for Linux (Alpine compatible)
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /app/json2xls ./cmd/json2xls
+# Build statically linked binary; GOOS/GOARCH берём из buildx
+RUN CGO_ENABLED=0 GOOS=${TARGETOS:-linux} GOARCH=${TARGETARCH:-amd64} go build -o /app/json2xls ./cmd/json2xls
 
 # 2) Runtime stage
 FROM alpine:3.19
