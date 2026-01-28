@@ -9,10 +9,12 @@ import (
 )
 
 func main() {
-	http.HandleFunc("/json2xls", handlers.HandleJson2Xls)
-	http.HandleFunc("/xls2json", handlers.HandleXls2Json)
+	// Защищаем BasicAuth'ом API (если заданы BASIC_AUTH_USER/BASIC_AUTH_PASS).
+	// Документацию и health оставляем открытыми.
+	http.HandleFunc("/json2xls", handlers.WithBasicAuth(handlers.HandleJson2Xls))
+	http.HandleFunc("/xls2json", handlers.WithBasicAuth(handlers.HandleXls2Json))
+	http.HandleFunc("/openapi.json", handlers.WithBasicAuth(handlers.HandleOpenAPI))
 	http.HandleFunc("/doc", handlers.HandleDoc)
-	http.HandleFunc("/openapi.json", handlers.HandleOpenAPI)
 	http.HandleFunc("/health", handlers.HandleHealth)
 
 	port := os.Getenv("PORT")

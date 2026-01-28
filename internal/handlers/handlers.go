@@ -2,11 +2,13 @@ package handlers
 
 import (
 	"bytes"
+	"crypto/subtle"
 	_ "embed"
 	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 	"strings"
 
 	"json2xls/internal/converter"
@@ -17,6 +19,37 @@ import (
 
 //go:embed openapi.json
 var openAPISpecBytes []byte
+
+func basicAuthEnabled() (user string, pass string, enabled bool) {
+	user = os.Getenv("BASIC_AUTH_USER")
+	pass = os.Getenv("BASIC_AUTH_PASS")
+	if user == "" || pass == "" {
+		return "", "", false
+	}
+	return user, pass, true
+}
+
+// WithBasicAuth wraps handler with Basic Auth if BASIC_AUTH_USER and BASIC_AUTH_PASS are set.
+func WithBasicAuth(next http.HandlerFunc) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		user, pass, enabled := basicAuthEnabled()
+		if !enabled {
+			next(w, r)
+			return
+		}
+
+		u, p, ok := r.BasicAuth()
+		if !ok ||
+			subtle.ConstantTimeCompare([]byte(u), []byte(user)) != 1 ||
+			subtle.ConstantTimeCompare([]byte(p), []byte(pass)) != 1 {
+			w.Header().Set("WWW-Authenticate", `Basic realm="json2xls"`)
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return
+		}
+
+		next(w, r)
+	}
+}
 
 // HandleJson2Xls обрабатывает POST запрос для конвертации JSON в XLS
 func HandleJson2Xls(w http.ResponseWriter, r *http.Request) {
@@ -153,4 +186,3 @@ func HandleHealth(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(map[string]string{"status": "ok"})
 }
-
