@@ -10,11 +10,6 @@ REST API сервис на Go для конвертации JSON данных в
 - Форматирования ячеек (цвета, шрифты, стили)
 - Различных типов данных (числа, строки, булевы значения)
 
-## Требования
-
-- Go 1.21 или выше
-- Доступ в интернет для загрузки зависимостей
-
 ## Быстрый запуск через Docker (без клонирования репозитория)
 
 ### Вариант A (рекомендуется): скачать `docker-compose.yml` и запустить
@@ -31,112 +26,12 @@ curl -fsSL -o docker-compose.yml https://raw.githubusercontent.com/tribesman/go-
 - **SERVICE_PORT**: порт, на который пробрасываем наружу (по умолчанию `8080`)
 - **BASIC_AUTH_USER / BASIC_AUTH_PASS**: если оба заданы — включается Basic Auth для `/json2xls`, `/xls2json`, `/openapi.json`
 
-Пример:
-
-```bash
-export PORT=8080
-export SERVICE_PORT=9090
-export BASIC_AUTH_USER=admin
-export BASIC_AUTH_PASS=secret
-```
-
-3. Запустите:
-
-```bash
-docker compose up -d
-```
-
-Образ будет скачан из GHCR: `ghcr.io/tribesman/go-json-xls-json:latest`
 
 ### Вариант B: одной командой (без сохранения файла)
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/tribesman/go-json-xls-json/main/docker-compose.yml | docker compose -f - up -d
 ```
-
-## Сборка проекта
-
-### Настройка окружения
-
-Если вы получаете ошибку `go: modules disabled by GO111MODULE=off`, включите поддержку модулей:
-
-```bash
-# Для текущей сессии
-export GO111MODULE=on
-
-# Или для постоянной настройки (добавьте в ~/.zshrc или ~/.bashrc)
-echo 'export GO111MODULE=on' >> ~/.zshrc
-source ~/.zshrc
-```
-
-Проверьте настройку:
-
-```bash
-go env GO111MODULE
-```
-
-### Для текущей платформы
-
-**Быстрая сборка (используя скрипт):**
-
-```bash
-# Клонируйте или перейдите в директорию проекта
-cd json2xls
-
-# Запустите скрипт сборки
-./build.sh
-
-# Запустите приложение
-./json2xls
-```
-
-**Ручная сборка:**
-
-```bash
-# Клонируйте или перейдите в директорию проекта
-cd json2xls
-
-# Убедитесь, что модули включены
-export GO111MODULE=on
-
-# Загрузите зависимости
-go mod download
-
-# Или используйте go mod tidy для синхронизации зависимостей
-go mod tidy
-
-# Соберите приложение
-go build -o json2xls
-
-# Запустите приложение
-./json2xls
-```
-
-### Для других платформ
-
-```bash
-# Linux
-GOOS=linux GOARCH=amd64 go build -o json2xls-linux
-
-# Windows
-GOOS=windows GOARCH=amd64 go build -o json2xls.exe
-
-# macOS (ARM)
-GOOS=darwin GOARCH=arm64 go build -o json2xls-macos-arm64
-
-# macOS (Intel)
-GOOS=darwin GOARCH=amd64 go build -o json2xls-macos-amd64
-```
-
-## Запуск
-
-После сборки запустите приложение:
-
-```bash
-./json2xls
-```
-
-Сервер запустится на порту `8080` по умолчанию.
 
 ## API Endpoints
 
@@ -186,20 +81,6 @@ curl -X POST http://localhost:8080/json2xls \
 curl -X POST http://localhost:8080/xls2json \
   -F "file=@input.xlsx" \
   -o output.json
-```
-
-**Пример запроса с использованием JavaScript (fetch):**
-
-```javascript
-const formData = new FormData();
-formData.append("file", fileInput.files[0]);
-
-fetch("http://localhost:8080/xls2json", {
-  method: "POST",
-  body: formData,
-})
-  .then((response) => response.json())
-  .then((data) => console.log(data));
 ```
 
 **Примечания:**
@@ -483,11 +364,3 @@ curl http://localhost:8080/health
   - Ошибка при открытии Excel файла (для `/xls2json`)
 - `405 Method Not Allowed` - неверный HTTP метод
 - `500 Internal Server Error` - ошибка при конвертации
-
-## Зависимости
-
-- [excelize/v2](https://github.com/xuri/excelize) - библиотека для работы с Excel файлами
-
-## Лицензия
-
-MIT
